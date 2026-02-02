@@ -1,73 +1,67 @@
 /**
- * Apps Script Backend for GitHub Pages
- * Handles POST requests for saving/updating and GET for searching
+ * Redirect GET requests to the API handler (for searching)
  */
-
-// Allow the script to be called from a different domain (GitHub Pages)
-function doPost(e) {
-  const result = processForm(JSON.parse(e.postData.contents));
-  return ContentService.createTextOutput(JSON.stringify({ "result": result }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-// Separate function for searching via GET
 function doGet(e) {
-  if (e.parameter.search) {
-    const results = searchRecords(e.parameter.search);
-    return ContentService.createTextOutput(JSON.stringify(results))
-      .setMimeType(ContentService.MimeType.JSON);
+  if (e.parameter.action === 'search') {
+    return handleSearch(e.parameter.date, e.parameter.name);
   }
-  return ContentService.createTextOutput("Service Running");
+  // Default response if accessed directly
+  return ContentService.createTextOutput("API is running.").setMimeType(ContentService.MimeType.TEXT);
 }
 
-function processForm(formData) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('Registrations');
-  if (!sheet) return "Error: Sheet 'Registrations' not found";
-  
-  const data = sheet.getDataRange().getValues();
-  const record = [
-    formData.id || Utilities.getUuid(),
-    formData.firstName,
-    formData.lastName,
-    formData.gender,
-    formData.church,
-    formData.phone,
-    formData.ailments,
-    formData.contactType + ": " + formData.contactName,
-    formData.contactPhone
-  ];
-
-  if (formData.id) {
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] == formData.id) {
-        sheet.getRange(i + 1, 1, 1, record.length).setValues([record]);
-        return "Entry updated successfully!";
-      }
+/**
+ * Handles POST requests (for Add and Update) from GitHub Pages
+ */
+function doPost(e) {
+  try {
+    const params = JSON.parse(e.postData.contents);
+    const action = params.action;
+    
+    if (action === 'add') {
+      return handleAdd(params);
+    } else if (action === 'update') {
+      return handleUpdate(params);
     }
-  } 
-  sheet.appendRow(record);
-  return "Registration saved successfully!";
+  } catch (error) {
+    return createResponse({ success: false, message: error.toString() });
+  }
 }
 
-function searchRecords(query) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('Registrations');
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const results = [];
-  const searchTerm = query.toLowerCase();
+function handleAdd(formData) {
+  const sheet = getAttendanceSheet();
+  const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+  sheet.appendRow([formData.date, fullName, formData.status, formData.reason || 'N/A', new Date()]);
+  return createResponse({ success: true, message: 'New attendance recorded!' });
+}
 
+function handleSearch(searchDate, searchName) {
+  const sheet = getAttendanceSheet();
+  const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
-    const firstName = String(data[i][1]).toLowerCase();
-    const lastName = String(data[i][2]).toLowerCase();
-    if (firstName.includes(searchTerm) || lastName.includes(searchTerm)) {
-      let obj = {};
-      headers.forEach((header, index) => {
-        obj[header.replace(/\s+/g, '').toLowerCase()] = data[i][index];
+    let rowDate = Utilities.formatDate(new Date(data[i][0]), Session.getScriptTimeZone(), "yyyy-MM-dd");
+    if (rowDate === searchDate && data[i][1].toString().toLowerCase() === searchName.toLowerCase()) {
+      const nameParts = data[i][1].toString().split(' ');
+      return createResponse({
+        success: true,
+        row: i + 1,
+        data: { date: rowDate, firstName: nameParts[0], lastName: nameParts.slice(1).join(' '), status: data[i][2], reason: data[i][3] }
       });
-      results.push(obj);
     }
   }
-  return results;
+  return createResponse({ success: false, message: 'No record found.' });
+}
+
+function handleUpdate(formData) {
+  const sheet = getAttendanceSheet();
+  const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+  sheet.getRange(parseInt(formData.rowId), 1, 1, 4).setValues([[formData.date, fullName, formData.status, formData.reason || 'N/A']]);
+  return createResponse({ success: true, message: 'Record updated!' });
+}
+
+function getAttendanceSheet() {
+  return SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Attendance');
+}
+
+function createResponse(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
