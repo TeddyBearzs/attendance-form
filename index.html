@@ -65,11 +65,11 @@
       }
       .d-none {
         display: none !important;
-      }
+      }  
     </style>
-  </head>
-  <body>
-    <div class="container position-relative">
+</head>
+<body>
+<div class="container position-relative">
       <div class="main-card">
         <div class="card-header-custom">
           <h3 class="mb-0">NTCOG Choir Attendance Form</h3>
@@ -116,8 +116,8 @@
           <!-- Global Alert Message Box -->
           <div id="messageBox" class="alert" role="alert"></div>
 
-          <div class="tab-content">
-            <!-- PANE 1: ADD NEW -->
+    <div class="tab-content">
+      <!-- PANE 1: ADD NEW -->
             <div class="tab-pane fade show active" id="add-pane">
               <form
                 id="addForm"
@@ -183,7 +183,7 @@
                     title="Enter a reason (optional)"
                   ></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 py-2">
+          <button type="submit" class="btn btn-primary w-100 py-2">
                   Submit Attendance
                 </button>
               </form>
@@ -389,6 +389,51 @@
           })
           [func](form);
       }
-    </script>
-  </body>
+  // Handle Add
+  document.getElementById('addForm').onsubmit = (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd);
+    apiCall({ action: 'add', ...data });
+  };
+
+  // Handle Update
+  document.getElementById('editForm').onsubmit = (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd);
+    apiCall({ action: 'update', ...data });
+  };
+
+  // Search uses GET
+  async function search() {
+    const d = document.getElementById('sDate').value;
+    const n = document.getElementById('sName').value;
+    if(!n) return showAlert("Please enter a name to search.", "warning");
+    
+    document.getElementById('loader').style.display = 'flex';
+    try {
+      const res = await fetch(`${API_URL}?action=search&date=${d}&name=${encodeURIComponent(n)}`);
+      const json = await res.json();
+      if(json.success) {
+        document.getElementById('searchBox').classList.add('d-none');
+        document.getElementById('editForm').classList.remove('d-none');
+        document.getElementById('eRow').value = json.row;
+        document.getElementById('eDate').value = json.data.date;
+        document.getElementById('eFN').value = json.data.firstName;
+        document.getElementById('eLN').value = json.data.lastName;
+        document.getElementById('eStatus').value = json.data.status;
+        document.getElementById('eReason').value = json.data.reason;
+        document.getElementById('alert').classList.add('d-none');
+      } else {
+        showAlert(json.message, "warning");
+      }
+    } catch (e) {
+      showAlert("Search error: Verify your API_URL and Apps Script deployment.", "danger");
+    } finally {
+      document.getElementById('loader').style.display = 'none';
+    }
+  }
+</script>
+</body>
 </html>
