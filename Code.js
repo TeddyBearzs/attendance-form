@@ -27,15 +27,16 @@ function doPost(e) {
 }
 
 /**
- * Saves a new record using separate first and last names
+ * Saves a new record into separate First and Last name columns
  */
 function handleAdd(formData) {
   const sheet = getAttendanceSheet();
-  const fullName = `${formData.firstName} ${formData.lastName}`.trim();
   
+  // Appends to: Date (A), First Name (B), Last Name (C), Status (D), Reason (E), Timestamp (F)
   sheet.appendRow([
     formData.date, 
-    fullName, 
+    formData.firstName, 
+    formData.lastName, 
     formData.status, 
     formData.reason || 'N/A', 
     new Date()
@@ -45,7 +46,7 @@ function handleAdd(formData) {
 }
 
 /**
- * Searches for a record and returns separate first and last names
+ * Searches for a record by looking at Column B (First) and Column C (Last) combined
  */
 function handleSearch(searchDate, searchName) {
   const sheet = getAttendanceSheet();
@@ -53,13 +54,11 @@ function handleSearch(searchDate, searchName) {
   
   for (let i = 1; i < data.length; i++) {
     let rowDate = Utilities.formatDate(new Date(data[i][0]), Session.getScriptTimeZone(), "yyyy-MM-dd");
-    if (rowDate === searchDate && data[i][1].toString().toLowerCase() === searchName.toLowerCase()) {
-      
-      // Split the Full Name from the sheet into First and Last for the API response
-      const nameParts = data[i][1].toString().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
+    let firstName = data[i][1].toString();
+    let lastName = data[i][2].toString();
+    let fullNameFromSheet = (firstName + " " + lastName).toLowerCase().trim();
 
+    if (rowDate === searchDate && fullNameFromSheet === searchName.toLowerCase().trim()) {
       return createResponse({
         success: true,
         row: i + 1,
@@ -67,8 +66,8 @@ function handleSearch(searchDate, searchName) {
           date: rowDate, 
           firstName: firstName, 
           lastName: lastName, 
-          status: data[i][2], 
-          reason: data[i][3] 
+          status: data[i][3], 
+          reason: data[i][4] 
         }
       });
     }
@@ -77,15 +76,17 @@ function handleSearch(searchDate, searchName) {
 }
 
 /**
- * Updates an existing row using separate first and last names
+ * Updates an existing row across the separate columns
  */
 function handleUpdate(formData) {
   const sheet = getAttendanceSheet();
-  const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+  const row = parseInt(formData.rowId);
   
-  sheet.getRange(parseInt(formData.rowId), 1, 1, 4).setValues([[
+  // Update Range: Columns A through E (1 to 5)
+  sheet.getRange(row, 1, 1, 5).setValues([[
     formData.date, 
-    fullName, 
+    formData.firstName, 
+    formData.lastName, 
     formData.status, 
     formData.reason || 'N/A'
   ]]);
