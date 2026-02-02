@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Choir Attendance</title>
+    <title>Choir Attendance Manager</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -11,300 +11,181 @@
     <style>
       body {
         background-color: #f0f2f5;
-        padding-top: 30px;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        padding: 20px;
+        font-family: sans-serif;
       }
       .main-card {
         background: white;
-        padding: 0;
         border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         max-width: 600px;
         margin: auto;
         overflow: hidden;
       }
-      .card-header-custom {
+      .card-header {
         background: #0d6efd;
         color: white;
         padding: 20px;
         text-align: center;
+        border: none;
       }
-      .content-padding {
-        padding: 30px;
+      .content {
+        padding: 20px;
+        position: relative;
       }
-      .nav-tabs {
-        border-bottom: none;
-        justify-content: center;
-        background: #e9ecef;
-      }
-      .nav-link {
-        border: none !important;
-        color: #6c757d;
-        padding: 12px 25px;
-        font-weight: 600;
-      }
-      .nav-link.active {
-        background: white !important;
-        color: #0d6efd !important;
-      }
-      #messageBox {
-        display: none;
-        margin-bottom: 20px;
-      }
-      .loading-overlay {
+      #loader {
         display: none;
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(255, 255, 255, 0.7);
-        z-index: 10;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 100;
         justify-content: center;
         align-items: center;
       }
-      .d-none {
-        display: none !important;
-      }  
     </style>
-</head>
-<body>
-<div class="container position-relative">
-      <div class="main-card">
-        <div class="card-header-custom">
-          <h3 class="mb-0">NTCOG Choir Attendance Form</h3>
-        </div>
+  </head>
+  <body>
+    <div class="main-card">
+      <div class="card-header"><h3>NTCOG Choir Attendance Form</h3></div>
 
-        <!-- Tab Navigation -->
-        <ul class="nav nav-tabs" id="myTab" role="tablist">
-          <li class="nav-item" role="presentation">
-            <a
-              class="nav-link active"
-              id="add-tab"
-              data-bs-toggle="tab"
-              href="#add-pane"
-              role="tab"
-              aria-controls="add-pane"
-              aria-selected="true"
-              tabindex="0"
-            >
-              New Entry
-            </a>
-          </li>
-          <li class="nav-item" role="presentation">
-            <a
-              class="nav-link"
-              id="update-tab"
-              data-bs-toggle="tab"
-              href="#update-pane"
-              role="tab"
-              aria-controls="update-pane"
-              aria-selected="false"
-              tabindex="-1"
-            >
-              Update Existing
-            </a>
-          </li>
-        </ul>
+      <ul class="nav nav-tabs nav-fill" id="tabList">
+        <li class="nav-item">
+          <a class="nav-link active" data-bs-toggle="tab" href="#add">Add</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-bs-toggle="tab" href="#update">Update</a>
+        </li>
+      </ul>
 
-        <div class="content-padding position-relative">
-          <!-- Loader -->
-          <div id="loader" class="loading-overlay">
-            <div class="spinner-border text-primary"></div>
+      <div class="content">
+        <div id="loader"><div class="spinner-border text-primary"></div></div>
+        <div id="alert" class="alert d-none"></div>
+
+        <div class="tab-content">
+          <!-- ADD FORM -->
+          <div class="tab-pane fade show active" id="add">
+            <form id="addForm">
+              <div class="mb-3">
+                <label for="defaultDate">Date</label
+                ><input
+                  type="date"
+                  name="date"
+                  class="form-control"
+                  required
+                  id="defaultDate"
+                />
+              </div>
+              <div class="row">
+                <div class="col">
+                  <label for="addFirstName">First Name</label
+                  ><input
+                    type="text"
+                    name="firstName"
+                    class="form-control"
+                    required
+                    id="addFirstName"
+                  />
+                </div>
+                <div class="col">
+                  <label for="addLastName">Last Name</label
+                  ><input
+                    type="text"
+                    name="lastName"
+                    class="form-control"
+                    required
+                    id="addLastName"
+                  />
+                </div>
+              </div>
+              <div class="my-3">
+                <label for="addStatus">Status</label
+                ><select name="status" class="form-select" id="addStatus">
+                  <option>Present</option>
+                  <option>Absent</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="addReason">Reason</label
+                ><textarea
+                  name="reason"
+                  class="form-control"
+                  id="addReason"
+                ></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">
+                Submit
+              </button>
+            </form>
           </div>
 
-          <!-- Global Alert Message Box -->
-          <div id="messageBox" class="alert" role="alert"></div>
-
-    <div class="tab-content">
-      <!-- PANE 1: ADD NEW -->
-            <div class="tab-pane fade show active" id="add-pane">
-              <form
-                id="addForm"
-                onsubmit="
-                  event.preventDefault();
-                  handleAction('add', this);
-                "
-              >
-                <div class="mb-3">
-                  <label class="form-label">Date</label>
-                  <input
-                    type="date"
-                    name="date"
-                    class="form-control"
-                    required
-                    id="addDate"
-                    title="Select date"
-                  />
-                </div>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">First Name</label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      class="form-control"
-                      placeholder="First Name"
-                      required
-                    />
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label class="form-label">Last Name</label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      class="form-control"
-                      placeholder="Last Name"
-                      required
-                    />
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label" for="addStatus">Status</label>
-                  <select
-                    name="status"
-                    id="addStatus"
-                    class="form-select"
-                    required
-                    title="Select attendance status"
-                  >
-                    <option value="Present">Present</option>
-                    <option value="Absent">Absent</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label" for="addReason">Reason</label>
-                  <textarea
-                    name="reason"
-                    id="addReason"
-                    class="form-control"
-                    rows="2"
-                    placeholder="Optional reason for absence"
-                    title="Enter a reason (optional)"
-                  ></textarea>
-                </div>
-          <button type="submit" class="btn btn-primary w-100 py-2">
-                  Submit Attendance
-                </button>
-              </form>
+          <!-- UPDATE SECTION -->
+          <div class="tab-pane fade" id="update">
+            <div id="searchBox">
+              <label for="sDate">Date</label>
+              <input type="date" id="sDate" class="form-control mb-2" />
+              <label for="sName">Full Name</label>
+              <input
+                type="text"
+                id="sName"
+                class="form-control mb-2"
+                placeholder="Full Name (First Last)"
+              />
+              <button onclick="search()" class="btn btn-secondary w-100">
+                Find Record
+              </button>
             </div>
-
-            <!-- PANE 2: SEARCH & UPDATE -->
-            <div class="tab-pane fade" id="update-pane">
-              <!-- Step 1: Search -->
-              <div id="searchSection">
-                <p class="text-muted small">
-                  Find a record to edit by entering the date and full name.
-                </p>
-                <div class="mb-3">
-                  <label class="form-label" for="searchDate"
-                    >Date to Search</label
-                  >
-                  <input
-                    type="date"
-                    id="searchDate"
-                    class="form-control"
-                    title="Select date to search"
-                  />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Full Name to Search</label>
-                  <input
+            <form id="editForm" class="d-none mt-3">
+              <input type="hidden" name="rowId" id="eRow" />
+              <div class="mb-2">
+                <label for="eDate">Date</label
+                ><input
+                  type="date"
+                  name="date"
+                  id="eDate"
+                  class="form-control"
+                  required
+                />
+              </div>
+              <div class="row mb-2">
+                <div class="col">
+                  <label for="eFN">First Name</label
+                  ><input
                     type="text"
-                    id="searchName"
+                    name="firstName"
+                    id="eFN"
                     class="form-control"
-                    placeholder="First Last"
-                    title="Enter full name to search"
+                    placeholder="First"
                   />
                 </div>
-                <button
-                  onclick="performSearch()"
-                  class="btn btn-secondary w-100"
-                >
-                  Find Record
-                </button>
+                <div class="col">
+                  <label for="eLN">Last Name</label
+                  ><input
+                    type="text"
+                    name="lastName"
+                    id="eLN"
+                    class="form-control"
+                    placeholder="Last"
+                  />
+                </div>
               </div>
-
-              <!-- Step 2: Edit Form (Hidden until record found) -->
-              <div id="editSection" class="d-none">
-                <hr />
-                <h5>Edit Record</h5>
-                <form
-                  id="updateForm"
-                  onsubmit="
-                    event.preventDefault();
-                    handleAction('update', this);
-                  "
-                >
-                  <input type="hidden" name="rowId" id="editRowId" />
-                  <div class="mb-3">
-                    <label class="form-label">Date</label>
-                    <input
-                      type="date"
-                      name="date"
-                      id="editDate"
-                      class="form-control"
-                      required
-                    />
-                  </div>
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label">First Name</label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        id="editFirstName"
-                        class="form-control"
-                        required
-                      />
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label">Last Name</label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        id="editLastName"
-                        class="form-control"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Status</label>
-                    <select
-                      name="status"
-                      id="editStatus"
-                      class="form-select"
-                      required
-                    >
-                      <option value="Present">Present</option>
-                      <option value="Absent">Absent</option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Reason</label>
-                    <textarea
-                      name="reason"
-                      id="editReason"
-                      class="form-control"
-                      rows="2"
-                    ></textarea>
-                  </div>
-                  <div class="d-flex gap-2">
-                    <button
-                      type="button"
-                      onclick="cancelEdit()"
-                      class="btn btn-light border w-50"
-                    >
-                      Cancel
-                    </button>
-                    <button type="submit" class="btn btn-success w-50">
-                      Save Changes
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
+              <label for="eStatus">Status</label>
+              <select name="status" id="eStatus" class="form-select mb-2">
+                <option>Present</option>
+                <option>Absent</option>
+              </select>
+              <label for="eReason">Reason</label>
+              <textarea
+                name="reason"
+                id="eReason"
+                class="form-control mb-2"
+              ></textarea>
+              <button type="submit" class="btn btn-success w-100">
+                Update
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -312,128 +193,86 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-      // Init dates
-      const today = new Date().toISOString().split("T")[0];
-      document.getElementById("addDate").value = today;
-      document.getElementById("searchDate").value = today;
+      // !!! REPLACE THIS WITH YOUR DEPLOYED WEB APP URL !!!
+      const API_URL =
+        "https://script.google.com/macros/s/AKfycbwaRjd2JI1YpwkaUvYoqNA-QpezuwPFubrIbZXHV-QgOmd4rXemNnlMxYDXW_FCX8pb/exec";
 
-      function showMsg(text, type = "success") {
-        const msg = document.getElementById("messageBox");
-        msg.className = `alert alert-${type}`;
-        msg.innerHTML = text;
-        msg.style.display = "block";
-        window.scrollTo(0, 0);
+      document.getElementById("defaultDate").valueAsDate = new Date();
+      document.getElementById("sDate").valueAsDate = new Date();
+
+      function showAlert(msg, type) {
+        const a = document.getElementById("alert");
+        a.className = `alert alert-${type}`;
+        a.innerHTML = msg;
+        a.classList.remove("d-none");
       }
 
-      function toggleLoader(show) {
-        document.getElementById("loader").style.display = show
-          ? "flex"
-          : "none";
+      async function apiCall(data) {
+        document.getElementById("loader").style.display = "flex";
+        try {
+          const response = await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors", // Apps Script requires no-cors for simple redirects
+            body: JSON.stringify(data),
+          });
+          // Because of no-cors, we can't read the response body directly,
+          // but the data will be sent to the sheet.
+          showAlert("Request sent! Check your sheet in a moment.", "info");
+          document.querySelectorAll("form").forEach((f) => f.reset());
+          document.getElementById("editForm").classList.add("d-none");
+          document.getElementById("searchBox").classList.remove("d-none");
+        } catch (e) {
+          showAlert("Error: " + e, "danger");
+        } finally {
+          document.getElementById("loader").style.display = "none";
+        }
       }
 
-      function performSearch() {
-        const date = document.getElementById("searchDate").value;
-        const name = document.getElementById("searchName").value;
-        if (!name) return showMsg("Please enter a name to search", "warning");
+      // Handle Add
+      document.getElementById("addForm").onsubmit = (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        apiCall({ action: "add", ...Object.fromEntries(fd) });
+      };
 
-        toggleLoader(true);
-        google.script.run
-          .withSuccessHandler((res) => {
-            toggleLoader(false);
-            if (res.success) {
-              document.getElementById("searchSection").style.display = "none";
-              document.getElementById("editSection").style.display = "block";
-              document.getElementById("editRowId").value = res.row;
-              document.getElementById("editDate").value = res.data.date;
-              document.getElementById("editFirstName").value =
-                res.data.firstName;
-              document.getElementById("editLastName").value = res.data.lastName;
-              document.getElementById("editStatus").value = res.data.status;
-              document.getElementById("editReason").value = res.data.reason;
-              document.getElementById("messageBox").style.display = "none";
-            } else {
-              showMsg(res.message, "danger");
-            }
-          })
-          .searchRecord(date, name);
+      // Handle Update
+      document.getElementById("editForm").onsubmit = (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        apiCall({ action: "update", ...Object.fromEntries(fd) });
+      };
+
+      // Search uses GET
+      async function search() {
+        const d = document.getElementById("sDate").value;
+        const n = document.getElementById("sName").value;
+        document.getElementById("loader").style.display = "flex";
+        try {
+          const res = await fetch(
+            `${API_URL}?action=search&date=${d}&name=${n}`,
+          );
+          const json = await res.json();
+          if (json.success) {
+            document.getElementById("searchBox").classList.add("d-none");
+            document.getElementById("editForm").classList.remove("d-none");
+            document.getElementById("eRow").value = json.row;
+            document.getElementById("eDate").value = json.data.date;
+            document.getElementById("eFN").value = json.data.firstName;
+            document.getElementById("eLN").value = json.data.lastName;
+            document.getElementById("eStatus").value = json.data.status;
+            document.getElementById("eReason").value = json.data.reason;
+          } else {
+            showAlert(json.message, "warning");
+          }
+        } catch (e) {
+          showAlert(
+            "Search error: Make sure you deployed the script as 'Anyone'",
+            "danger",
+          );
+        } finally {
+          document.getElementById("loader").style.display = "none";
+        }
       }
-
-      function cancelEdit() {
-        document.getElementById("searchSection").style.display = "block";
-        document.getElementById("editSection").style.display = "none";
-        document.getElementById("updateForm").reset();
-      }
-
-      function handleAction(action, form) {
-        toggleLoader(true);
-        const func = action === "add" ? "processForm" : "updateRecord";
-
-        google.script.run
-          .withSuccessHandler((res) => {
-            toggleLoader(false);
-            if (res.success) {
-              showMsg(res.message, "success");
-              form.reset();
-              if (action === "add") {
-                document.getElementById("addDate").value = today;
-              } else {
-                cancelEdit();
-              }
-            } else {
-              showMsg(res.message, "danger");
-            }
-          })
-          .withFailureHandler((err) => {
-            toggleLoader(false);
-            showMsg("System Error: " + err, "danger");
-          })
-          [func](form);
-      }
-  // Handle Add
-  document.getElementById('addForm').onsubmit = (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = Object.fromEntries(fd);
-    apiCall({ action: 'add', ...data });
-  };
-
-  // Handle Update
-  document.getElementById('editForm').onsubmit = (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = Object.fromEntries(fd);
-    apiCall({ action: 'update', ...data });
-  };
-
-  // Search uses GET
-  async function search() {
-    const d = document.getElementById('sDate').value;
-    const n = document.getElementById('sName').value;
-    if(!n) return showAlert("Please enter a name to search.", "warning");
-    
-    document.getElementById('loader').style.display = 'flex';
-    try {
-      const res = await fetch(`${API_URL}?action=search&date=${d}&name=${encodeURIComponent(n)}`);
-      const json = await res.json();
-      if(json.success) {
-        document.getElementById('searchBox').classList.add('d-none');
-        document.getElementById('editForm').classList.remove('d-none');
-        document.getElementById('eRow').value = json.row;
-        document.getElementById('eDate').value = json.data.date;
-        document.getElementById('eFN').value = json.data.firstName;
-        document.getElementById('eLN').value = json.data.lastName;
-        document.getElementById('eStatus').value = json.data.status;
-        document.getElementById('eReason').value = json.data.reason;
-        document.getElementById('alert').classList.add('d-none');
-      } else {
-        showAlert(json.message, "warning");
-      }
-    } catch (e) {
-      showAlert("Search error: Verify your API_URL and Apps Script deployment.", "danger");
-    } finally {
-      document.getElementById('loader').style.display = 'none';
-    }
-  }
-</script>
-</body>
+    </script>
+  </body>
 </html>
